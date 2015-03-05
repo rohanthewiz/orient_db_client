@@ -453,7 +453,6 @@ module OrientDbClient
 				command = Commands::DbExist.new :session => session,
 																				:database => database,
                                         :storage_type => server_type
-        binding.pry
 				command.write(socket)
 				read_response(socket)
 
