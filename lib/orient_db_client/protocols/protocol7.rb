@@ -319,13 +319,15 @@ module OrientDbClient
 																				:mode => options[:async] ? 'a'.ord : 's'.ord,
 																				:command_serialized => query.to_binary_s
 				command.write(socket)
-        status = read_response(socket)
-        puts "status: #{status} - 0 is good"
-        # The first read here is killing all socket data somehow. Can get the data with: socket.recvfrom(socket.stat.size)
-        session_read = read_integer(socket)
-        command_results = read_command(socket)
+        while socket.stat.size < 70 do
+            sleep 0.01
+            socket.stat
+        end
+        payload = socket.recvfrom(socket.stat.size) # I have to read everything at once or socket drops data
+        payload = payload.first if payload.respond_to? :each
+        command_results = OrientDbClient::Deserializers::Deserializer7.new.deserialize(payload)
 
-				{ :session 			=> session_read,
+				{ :session          => command_results[:session],
 				  :message_content 	=> command_results }
 			end
 
@@ -334,9 +336,7 @@ module OrientDbClient
 																				:user => options[:user],
 																				:password => options[:password]
 				command.write(socket)
-				status = read_response(socket)
-        puts "status: #{status} - 0 is good"
-        # binding.pry
+				read_response(socket)
         session_read = read_integer(socket)
         result = read_connect(socket)
 
@@ -749,10 +749,8 @@ module OrientDbClient
 
 			def self.read_response(socket)
 				result = read_byte(socket)
-        puts "Status response: #{result}"
-
+        puts "Status response: #{result}" # TODO remove for production
 				raise_response_error(socket) unless result == Statuses::OK
-        result
 			end
 
 			def self.raise_response_error(socket)
