@@ -1,4 +1,4 @@
-require 'orient_db_client/rid'
+require_relative '../rid'
 
 require 'base64'
 

@@ -1,8 +1,8 @@
-require 'orient_db_client/network_message'
-require 'orient_db_client/version'
-require 'orient_db_client/deserializers/deserializer7'
-require 'orient_db_client/serializers/serializer7'
-require 'orient_db_client/exceptions'
+require_relative '../network_message'
+require_relative '../version'
+require_relative '../deserializers/deserializer7'
+require_relative '../serializers/serializer7'
+require_relative '../exceptions'
 
 require 'bindata'
 
@@ -44,6 +44,10 @@ module OrientDbClient
 				FLAT		= 'f'.ord
 				DOCUMENT 	= 'd'.ord
 			end
+
+			# module StorageTypes
+			# 	PLOCAL		= 'plocal'.freeze
+			# end
 
 			module Statuses
 				OK			= 0
@@ -215,6 +219,7 @@ module OrientDbClient
 					int32 					:session
 
 					protocol_string :database
+					protocol_string :storage_type
 				end
 
 				class DbOpen < BinData::Record
@@ -444,11 +449,12 @@ module OrientDbClient
 				{ :session => read_integer(socket) }
 			end
 
-			def self.db_exist(socket, session, database)
+			def self.db_exist(socket, session, database, server_type = 'plocal')
 				command = Commands::DbExist.new :session => session,
-																				 :database => database
+																				:database => database,
+                                        :storage_type => server_type
+        binding.pry
 				command.write(socket)
-
 				read_response(socket)
 
 				{ :session 			=> read_integer(socket),

@@ -1,6 +1,6 @@
-require "orient_db_client/connection"
-require "orient_db_client/version"
-require "orient_db_client/rid"
+require_relative "./orient_db_client/connection"
+require_relative "./orient_db_client/version"
+require_relative "./orient_db_client/rid"
 
 require "socket"
 

@@ -1,8 +1,9 @@
 test:
   host: localhost
   port: 2424
+  protocol_version: 28
   server_user: root
-  server_password: orient123
-  database: temp
+  server_password: orient
+  database: sitepoint-test
   user: admin
   password: admin

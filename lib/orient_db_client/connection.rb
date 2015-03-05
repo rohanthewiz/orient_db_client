@@ -1,6 +1,6 @@
-require 'orient_db_client/database_session'
-require 'orient_db_client/server_session'
-require 'orient_db_client/protocol_factory'
+require_relative './database_session'
+require_relative './server_session'
+require_relative './protocol_factory'
 
 module OrientDbClient
   class Connection
@@ -70,6 +70,7 @@ module OrientDbClient
 
     def database_exists?(session, database)
       response = @protocol.db_exist(@socket, session, database)
+      puts "response: #{response}"
 
       response[:message_content][:result] == 1
     end

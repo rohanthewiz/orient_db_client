@@ -10,7 +10,8 @@ module OrientDbClient
 
 		PROTOCOLS = {
 			'7' => Protocols::Protocol7,
-      '12' => Protocols::Protocol12
+      '12' => Protocols::Protocol12,
+      '28' => Protocols::Protocol12
 		}
 
 		def self.get_protocol(version)

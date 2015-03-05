@@ -1,11 +1,11 @@
-require 'orient_db_client/network_message'
-require 'orient_db_client/version'
+require_relative '../network_message'
+require_relative '../version'
 require 'bindata'
 
 module OrientDbClient
   module Protocols
     class Protocol12 < Protocol7
-      VERSION = 12
+      VERSION = 21
 
       module Commands
         class ConfigGet < BinData::Record

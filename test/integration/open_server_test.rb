@@ -18,7 +18,7 @@ class TestOpenServer < MiniTest::Unit::TestCase
     	:user => @options["server_user"],
     	:password => @options["server_password"]
     })
-
+    puts "Session Id: #{session.id}"
     refute_nil session.id
   end
 end

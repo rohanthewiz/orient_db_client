@@ -1,4 +1,4 @@
-require 'orient_db_client/session'
+require_relative './session'
 
 module OrientDbClient
 	class DatabaseSession < Session
