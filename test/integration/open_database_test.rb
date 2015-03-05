@@ -20,7 +20,6 @@ class TestOpenDatabase < MiniTest::Unit::TestCase
     })
 
     refute_nil session.id
-
     refute_nil session.get_cluster("orids")
     refute_nil session.get_cluster("ouser")
     refute_nil session.get_cluster("orole")

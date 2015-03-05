@@ -43,11 +43,8 @@ class TestServerSession < MiniTest::Unit::TestCase
   	end
   end
 
-  def test_create_and_delete_memory_database_commands
-    skip # Bug in OrientDB-1.0rc9 prevents this test from passing
-
+  def test_create_and_delete_memory_database_commands # This test is passing
     database = "test_create_memory_database"
-
     @session.delete_database(database) if @session.database_exists?(database)
 
     begin

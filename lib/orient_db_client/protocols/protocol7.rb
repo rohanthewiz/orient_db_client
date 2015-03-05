@@ -205,21 +205,18 @@ module OrientDbClient
 
 				class DbDelete < BinData::Record
 					endian :big
-
 					int8		 				:operation, 			:value => Operations::DB_DELETE
 					int32 					:session
-
 					protocol_string :database
+          protocol_string :storage_type   # as of version 1.5
 				end
 
 				class DbExist < BinData::Record
 					endian :big
-
 					int8		 				:operation, 			:value => Operations::DB_EXIST
 					int32 					:session
-
 					protocol_string :database
-					protocol_string :storage_type
+					protocol_string :storage_type  # as of version 1.5
 				end
 
 				class DbOpen < BinData::Record
@@ -439,11 +436,11 @@ module OrientDbClient
 				{ :session => read_integer(socket) }
 			end
 
-			def self.db_delete(socket, session, database)
+			def self.db_delete(socket, session, database, server_type = 'plocal')
 				command = Commands::DbDelete.new :session => session,
-																							 :database => database
+																							 :database => database,
+                                               :storage_type => server_type
 				command.write(socket)
-
 				read_response(socket)
 
 				{ :session => read_integer(socket) }

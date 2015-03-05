@@ -121,7 +121,7 @@ module OrientDbClient
   		response = @protocol.db_open(@socket, database, options)
       session = response[:session]
       message_content = response[:message_content]
-      
+
       @sessions[session] = DatabaseSession.new(message_content[:session], self, message_content[:clusters])
   	end
 
