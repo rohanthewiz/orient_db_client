@@ -22,7 +22,6 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
   # As such, this test doesn't really do anything that makes sense...
   def test_close
     @session.close
-
     refute @connection.closed?
   end
 

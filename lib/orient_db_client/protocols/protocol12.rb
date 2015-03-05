@@ -166,7 +166,7 @@ module OrientDbClient
       def self.db_open(socket, database, options = {})
         command = Commands::DbOpen.new :protocol_version => self.version,
         :database_name => database,
-        :database_type => options[:database_type] || 'document',
+        :database_type => options[:database_type] || 'graph',
         :user_name => options[:user],
         :user_password => options[:password]
         command.write(socket)

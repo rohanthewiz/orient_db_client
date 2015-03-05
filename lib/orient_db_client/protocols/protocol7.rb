@@ -106,7 +106,6 @@ module OrientDbClient
 					int8		 				:operation, 			:value => Operations::COMMAND
 					int32 					:session
 					int8 						:mode,						:initial_value => 's'.ord
-
 					protocol_string	:command_serialized
 				end
 
@@ -315,19 +314,19 @@ module OrientDbClient
 				end
 
 				query = QueryMessage.new :query_class_name => options[:query_class_name],
-																 :text => command,
-																 :non_text_limit => options[:non_text_limit] || options[:limit]
-
+																 :text => command # leave this to the -1 default for now, :non_text_limit => options[:non_text_limit] || options[:limit]
 				command = Commands::Command.new :session => session,
 																				:mode => options[:async] ? 'a'.ord : 's'.ord,
 																				:command_serialized => query.to_binary_s
-
 				command.write(socket)
+        status = read_response(socket)
+        puts "status: #{status} - 0 is good"
+        # The first read here is killing all socket data somehow. Can get the data with: socket.recvfrom(socket.stat.size)
+        session_read = read_integer(socket)
+        command_results = read_command(socket)
 
-				read_response(socket)
-
-				{ :session 			=> read_integer(socket),
-				  :message_content 	=> read_command(socket) }
+				{ :session 			=> session_read,
+				  :message_content 	=> command_results }
 			end
 
 			def self.connect(socket, options = {})
@@ -335,11 +334,14 @@ module OrientDbClient
 																				:user => options[:user],
 																				:password => options[:password]
 				command.write(socket)
+				status = read_response(socket)
+        puts "status: #{status} - 0 is good"
+        # binding.pry
+        session_read = read_integer(socket)
+        result = read_connect(socket)
 
-				read_response(socket)
-
-				{ :session 			=> read_integer(socket),
-				  :message_content 	=> read_connect(socket) }
+				{ :session 			=> session_read,
+				  :message_content 	=> result }
 			end
 
 			def self.count(socket, session, cluster_name)
@@ -747,8 +749,10 @@ module OrientDbClient
 
 			def self.read_response(socket)
 				result = read_byte(socket)
+        puts "Status response: #{result}"
 
 				raise_response_error(socket) unless result == Statuses::OK
+        result
 			end
 
 			def self.raise_response_error(socket)
