@@ -51,7 +51,6 @@ module OrientDbClient
           binstr, col_len = grab(binstr, 4, true)
           qr = QueryRecord.new
           col_len.times do
-            # puts 'Working a record...'
             bytes_consumed = 0
             record = qr.read(binstr)
             bytes_consumed += record.do_num_bytes
@@ -64,7 +63,11 @@ module OrientDbClient
             end
             tokens = record.properties.split(',')
             while token = tokens.shift
-              # binding.pry
+              arr = token.split('@', 2)
+              if arr.length == 2
+                fields[:class] = arr[0]
+                token = arr[1]
+              end
               field, value = parse_field(token, tokens, struct_info)
               fields[field] = value unless field == :delimiter || field == :property_len
             end
@@ -86,7 +89,7 @@ module OrientDbClient
         [binary_string[n_bytes .. -1], slice]
       end
 
-      # def old_deserialize(text) # Perhaps this one is document based - TODO
+      # def old_deserialize(text) # Perhaps this one is purely document based - TODO
       #     result = { :document => {}, :structure => {} }
       #     struct_info = {}
       #
@@ -147,7 +150,6 @@ module OrientDbClient
       def parse_rid_bag(value)
         value = Base64.decode64(value)
         rb = RidBag.new.read value
-        # binding.pry
         return 0 if rb.rid_count < 1
         value = value[5..-1]
         rid_bin = RidBin.new

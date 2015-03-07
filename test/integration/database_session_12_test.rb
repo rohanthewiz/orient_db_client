@@ -26,7 +26,7 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
   end
 
   def test_single_query
-    result = @session.query("select from V")
+    result = @session.query("select from Animal")
     puts result
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
