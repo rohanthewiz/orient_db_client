@@ -25,7 +25,13 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     refute @connection.closed?
   end
 
-  def test_query
+  def test_single_query
+    result = @session.query("select from V")
+    puts result
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+  end
+
+  def test_multi_query
     result = @session.query('SELECT FROM OUser')
     puts result
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
@@ -60,6 +66,15 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     result = @session.query('SELECT FROM E')
     puts result
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+
+    result = @session.query('SELECT FROM OUser')
+    puts result
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+
+    result = @session.query('SELECT FROM Animal')
+    puts result
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+
   end
   
   def test_multi_create12

@@ -9,12 +9,25 @@ module OrientDbClient
       endian :big
 
       int16 						:delimiter,		:value => 0
-      int8 						  :type_not_sure
-      int16 						:data1
-      int64         		:data2
-      int32         		:data3
+      int8 						  :record_type
+      int16 						:cluster_id
+      int64         		:cluster_position
+      int32         		:version
       int32             :property_len
       string            :properties, :read_length => :property_len
+    end
+
+    class RidBin < BinData::Record
+      endian :big
+      int16 						:cluster_id
+      int64         		:cluster_position
+    end
+
+    class RidBag < BinData::Record
+      endian :big
+      int8 				      :config
+      int32 						:rid_count
+      # string						:rids, :read_length => :rid_count
     end
 
     class Deserializer7
@@ -38,20 +51,26 @@ module OrientDbClient
           binstr, col_len = grab(binstr, 4, true)
           qr = QueryRecord.new
           col_len.times do
-            puts 'Working a record...'
+            # puts 'Working a record...'
             bytes_consumed = 0
             record = qr.read(binstr)
             bytes_consumed += record.do_num_bytes
             fields = {}
+            if record.record_type.do_num_bytes > 0
+              fields[:record_type] = record.record_type.chr
+            end
+            if record.cluster_id.do_num_bytes > 0
+              fields[:rid] = OrientDbClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
+            end
             tokens = record.properties.split(',')
             while token = tokens.shift
+              # binding.pry
               field, value = parse_field(token, tokens, struct_info)
-              fields[field] = value
+              fields[field] = value unless field == :delimiter || field == :property_len
             end
-            records << {record => fields}
+            records << fields
             binstr = binstr[bytes_consumed .. -1]
           end
-
 
         when 'r'
           # do for single record
@@ -112,13 +131,33 @@ module OrientDbClient
       end
 
       def parse_field(token, tokens, struct_info)
-        field, value = token.split(":", 2)
+        field, value = token.split(':', 2)
 
         field = remove_ends(field) if field.match(@@string_matcher)
 
-        value = parse_value(value, tokens, struct_info)
+        if (field =~ /^(in|out)_/) != nil
+          value = parse_rid_bag(value)
+        else
+          value = parse_value(value, tokens, struct_info)
+        end
 
         return field, value
+      end
+
+      def parse_rid_bag(value)
+        value = Base64.decode64(value)
+        rb = RidBag.new.read value
+        # binding.pry
+        return 0 if rb.rid_count < 1
+        value = value[5..-1]
+        rid_bin = RidBin.new
+        rids = []
+        rb.rid_count.times do
+          r = rid_bin.read(value)
+          rids << OrientDbClient::Rid.new("##{r.cluster_id}:#{r.cluster_position}")
+          value = value[10..-1]
+        end
+        rids
       end
 
       def parse_time(value)
