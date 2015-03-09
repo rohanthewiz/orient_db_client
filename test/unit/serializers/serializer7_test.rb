@@ -2,7 +2,7 @@ require File.join File.dirname(__FILE__), '..', '..', 'test_helper'
 
 class TestSerializer7 < MiniTest::Unit::TestCase
     def setup
-        @serializer = OrientDbClient::Protocols::Protocol7.serializer
+        @serializer = OrientDBClient::Protocols::Protocol7.serializer
     end
 
     def test_serialize
@@ -43,7 +43,7 @@ class TestSerializer7 < MiniTest::Unit::TestCase
                 'true' => 1,
                 'false' => nil,
                 'byte' => 97,
-                'array' => [ "Test", "Test3", 6, 2, OrientDbClient::Rid.new("#5:1") ],
+                'array' => [ "Test", "Test3", 6, 2, OrientDBClient::Rid.new("#5:1") ],
                 'date_from_time' => Time.at(1339560000).utc,
                 'date_from_string' => "2012-6-13",
                 'doc' => { 'integer' => 735 },

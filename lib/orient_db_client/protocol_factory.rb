@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'protocols', 'protocol7')
 require File.join(File.dirname(__FILE__), 'protocols', 'protocol12')
 
-module OrientDbClient
+module OrientDBClient
 	class ProtocolFactory
 
     # Orient server 1.0 supports Protocols 7 and 9.

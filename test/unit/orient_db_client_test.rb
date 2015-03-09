@@ -1,13 +1,13 @@
 require File.join File.dirname(__FILE__), '..', 'test_helper'
 require 'socket'
 
-class TestOrientDbClient < MiniTest::Unit::TestCase
+class TestOrientDBClient < MiniTest::Unit::TestCase
   include ConnectionHelper
 
   def test_exception_on_unsupported_protocol
     bad_protocol = -1
 
-    exp = assert_raises(OrientDbClient::UnsupportedProtocolError) do
+    exp = assert_raises(OrientDBClient::UnsupportedProtocolError) do
       mock_connect_to_orientdb(bad_protocol)
     end
 

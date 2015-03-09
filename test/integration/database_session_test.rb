@@ -70,7 +70,7 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
         doc['roles'].tap do |roles|
           assert roles.is_a?(Array), "expected Array, but got #{roles.class}"
 
-          assert roles[0].is_a?(OrientDbClient::Rid)
+          assert roles[0].is_a?(OrientDBClient::Rid)
           assert_equal 4, roles[0].cluster_id
           assert_equal 0, roles[0].cluster_position
         end

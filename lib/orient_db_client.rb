@@ -4,7 +4,7 @@ require_relative "./orient_db_client/rid"
 
 require "socket"
 
-module OrientDbClient
+module OrientDBClient
 	def connect(host, options = {})
     options[:port] = options[:port].to_i
     options[:port] = 2424 if options[:port] == 0

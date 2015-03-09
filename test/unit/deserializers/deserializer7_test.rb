@@ -2,7 +2,7 @@ require File.join File.dirname(__FILE__), '..', '..', 'test_helper'
 
 class TestDeserializer7 < MiniTest::Unit::TestCase
     def setup
-        @deserializer = OrientDbClient::Protocols::Protocol7.deserializer
+        @deserializer = OrientDBClient::Protocols::Protocol7.deserializer
     end
 
     def test_deserialize
@@ -32,7 +32,7 @@ class TestDeserializer7 < MiniTest::Unit::TestCase
             assert_equal 0,         d['id']
             assert_equal 3,         d['defaultClusterId']
 
-            assert d['inheritedRole'].is_a?(OrientDbClient::Rid), "expected Rid, but got #{d.class}"
+            assert d['inheritedRole'].is_a?(OrientDBClient::Rid), "expected Rid, but got #{d.class}"
             assert_equal '#3:2', d['inheritedRole'].to_s
 
             assert_equal 5.6234, d['float']

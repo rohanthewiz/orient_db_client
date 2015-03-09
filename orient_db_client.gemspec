@@ -4,7 +4,7 @@ require "orient_db_client/version"
 
 Gem::Specification.new do |s|
   s.name        = "orient_db_client"
-  s.version     = OrientDbClient::VERSION
+  s.version     = OrientDBClient::VERSION
   s.authors     = ["Ryan Fields, Rohan Allison"]
   s.email       = ["ryan.fields@twoleftbeats.com, rohanthewiz@gmail.com"]
   s.homepage    = 'https://github.com/rohanthewiz/orient_db_client'

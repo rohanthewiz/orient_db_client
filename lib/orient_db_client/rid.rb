@@ -1,4 +1,4 @@
-module OrientDbClient
+module OrientDBClient
     class Rid
         attr_reader :cluster_id
         attr_reader :cluster_position
@@ -10,7 +10,7 @@ module OrientDbClient
                 rid = rid[1..rid.length] if rid[0] == '#'
 
                 @cluster_id, @cluster_position = rid.split(":")
-            elsif cluster_id_or_rid.is_a?(OrientDbClient::Rid)
+            elsif cluster_id_or_rid.is_a?(OrientDBClient::Rid)
                 rid = cluster_id_or_rid
 
                 @cluster_id = rid.cluster_id

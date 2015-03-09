@@ -26,55 +26,54 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     refute @connection.closed?
   end
 
+  def test_user_query
+    result = @session.query("SELECT FROM OUser") # where name = 'admin'
+    puts JSON.pretty_generate(result)
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+
+    result[:message_content].tap do |content|
+      assert content.length > 1, 'There should be at least one user'
+
+      content[0].tap do |record|
+        assert record[:rid].is_a?(OrientDBClient::Rid)
+        assert_equal 'd', record[:record_type], "record_type should be 'd', it is #{record[:record_type]}"
+        assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
+        record[:document].tap do |fields |
+          assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
+          assert fields['roles'].is_a?(Array), "expected Array, but got #{fields['roles'].class}"
+        end
+      end
+    end
+  end
+
   def test_single_query
-    result = @session.query("select from V")
-    puts result.to_json
+    result = @session.query('select from V')
+    puts JSON.pretty_generate(result)
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+  end
+
+  def test_complex_query
+    result = @session.query('select *,$distance as distance from Vehicle where [latitude, longitude, $spatial] NEAR [32.83, -97.04, {"maxDistance":100}]')
+    puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
 
   def test_multi_query
-    result = @session.query('SELECT FROM OUser')
-    puts result
-    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
-
-    result[:message_content].tap do |content|
-      assert_equal 3, content.length
-
-    #   content[0].tap do |record|
-    #     assert_equal 0, record[:format]
-    #     assert_equal 4, record[:cluster_id]
-    #     assert_equal 0, record[:cluster_position]
-    #
-    #     record[:document].tap do |doc|
-    #       assert_equal 'admin', doc['name']
-    #       assert_equal 'ACTIVE', doc['status']
-    #
-    #       doc['roles'].tap do |roles|
-    #         assert roles.is_a?(Array), "expected Array, but got #{roles.class}"
-    #
-    #         assert roles[0].is_a?(OrientDbClient::Rid)
-    #         assert_equal 3, roles[0].cluster_id
-    #         assert_equal 0, roles[0].cluster_position
-    #       end
-    #     end
-    #   end
-    end
-
     result = @session.query('SELECT FROM V')
-    puts result
+    puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
     result = @session.query('SELECT FROM E')
-    puts result
+    puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
     result = @session.query('SELECT FROM OUser')
-    puts result
+    puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
-    result = @session.query('SELECT FROM Animal')
-    puts result
-    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+    # result = @session.query('SELECT FROM Animal')
+    # puts JSON.pretty_generate(result)
+    # assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
   end
   
@@ -95,14 +94,11 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     
   end
   
-  def test_create_class
+  def test_create_class # we now create classes through the session
     res = @session.command('create class testclass'); puts res # cluster id of the class is returned
     refute_nil res[:message_content], 'Failed to create class TestClass'
     res = @session.command('drop class testclass'); puts res
     assert_equal 'true', res[:message_content], 'Failed to drop TestClass'
-
-    # @connection.command(@session.id, "Create class testclass")
-  	# @connection.command(@session.id, "drop class testclass")
   end
   
   def test_create_and_delete_record12
@@ -115,7 +111,7 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
 
     cluster_id = @session.get_cluster(cluster)[:id]
     
-    record = { :key1 => "value1" }
+    record = { :key1 => 'value1'}
 
     rid = @session.create_record(cluster_id, record)
     created_record = @session.load_record(rid)
@@ -151,7 +147,7 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
         doc['roles'].tap do |roles|
           assert roles.is_a?(Array), "expected Array, but got #{roles.class}"
 
-          assert roles[0].is_a?(OrientDbClient::Rid)
+          assert roles[0].is_a?(OrientDBClient::Rid)
           assert_equal 4, roles[0].cluster_id
           assert_equal 0, roles[0].cluster_position
         end

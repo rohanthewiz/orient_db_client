@@ -1,6 +1,6 @@
 module ConnectionHelper
   def connect_to_orientdb(options)
-    OrientDbClient.connect(options["host"], {
+    OrientDBClient.connect(options["host"], {
       port: options["port"]
     })
   end

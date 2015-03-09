@@ -1,4 +1,4 @@
-module OrientDbClient
+module OrientDBClient
 	class Session
 		attr_reader :id
 

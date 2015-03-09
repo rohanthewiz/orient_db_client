@@ -15,7 +15,7 @@ class TestNetworkMessage < MiniTest::Unit::TestCase
 
 		expected = data.map { |d| d[1] }.pack('C s> l> a* l> a*')
 
-		message = OrientDbClient::NetworkMessage.new { |m|
+		message = OrientDBClient::NetworkMessage.new { |m|
 			data.each { |d|	m.add d[0], d[1] unless d[2] == :skip }
 		}
 

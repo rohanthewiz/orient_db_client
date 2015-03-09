@@ -6,7 +6,7 @@ require_relative '../exceptions'
 
 require 'bindata'
 
-module OrientDbClient
+module OrientDBClient
 	module Protocols
 		class Protocol7
 
@@ -73,7 +73,7 @@ module OrientDbClient
 			VERSION = 7
 
 			DRIVER_NAME 	= 'OrientDB Ruby Client'.freeze
-			DRIVER_VERSION 	= OrientDbClient::VERSION
+			DRIVER_VERSION 	= OrientDBClient::VERSION
 
 			COMMAND_CLASS = 'com.orientechnologies.orient.core.sql.OCommandSQL'.freeze
 			QUERY_CLASS = 'com.orientechnologies.orient.core.sql.query.OSQLSynchQuery'.freeze
@@ -327,7 +327,7 @@ module OrientDbClient
         end
         payload = socket.recvfrom(socket.stat.size) # I have to read everything at once or socket drops data
         payload = payload.first if payload.respond_to? :each
-        command_results = OrientDbClient::Deserializers::Deserializer7.new.deserialize(payload)
+        command_results = OrientDBClient::Deserializers::Deserializer7.new.deserialize(payload)
 
 				{ :session          => command_results[:session],
 				  :message_content 	=> command_results }
@@ -558,11 +558,11 @@ module OrientDbClient
 			end
 
 			def self.deserializer
-				return OrientDbClient::Deserializers::Deserializer7.new
+				return OrientDBClient::Deserializers::Deserializer7.new
 			end
 
 			def self.serializer
-				return OrientDbClient::Serializers::Serializer7.new
+				return OrientDBClient::Serializers::Serializer7.new
 			end
 
 			def self.version

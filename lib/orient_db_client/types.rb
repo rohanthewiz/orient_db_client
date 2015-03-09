@@ -1,4 +1,4 @@
-module OrientDbClient
+module OrientDBClient
     module Types
         [ :BINARY,
           :BOOLEAN,

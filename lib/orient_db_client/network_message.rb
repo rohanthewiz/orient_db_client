@@ -1,6 +1,6 @@
 require "bindata"
 
-module OrientDbClient
+module OrientDBClient
 	class NetworkMessage 
 
 		def initialize(&block)

@@ -2,7 +2,7 @@ require_relative '../network_message'
 require_relative '../version'
 require 'bindata'
 
-module OrientDbClient
+module OrientDBClient
   module Protocols
     class Protocol12 < Protocol7
       VERSION = 21

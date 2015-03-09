@@ -13,7 +13,7 @@ class TestConnection < MiniTest::Unit::TestCase
   def test_creating_a_cluster
     expected_cluster_id = 65
 
-    OrientDbClient::Protocols::Protocol7.stubs(:datacluster_add).returns({
+    OrientDBClient::Protocols::Protocol7.stubs(:datacluster_add).returns({
       :session => @session,
       :message_content => { :new_cluster_number => expected_cluster_id }
     })
@@ -27,7 +27,7 @@ class TestConnection < MiniTest::Unit::TestCase
     cluster_id = 5
     expected_cluster_position = 735
 
-    OrientDbClient::Protocols::Protocol7.stubs(:record_create).returns({
+    OrientDBClient::Protocols::Protocol7.stubs(:record_create).returns({
       :session => @session,
       :message_content => { :cluster_id => cluster_id,
                             :cluster_position => expected_cluster_position }
@@ -42,18 +42,18 @@ class TestConnection < MiniTest::Unit::TestCase
   def test_updating_a_record
     expected_version = 1
 
-    OrientDbClient::Protocols::Protocol7.stubs(:record_update).returns({
+    OrientDBClient::Protocols::Protocol7.stubs(:record_update).returns({
       :session => @session,
       :message_content => { :record_version => expected_version }
     })
 
-    version = @connection.update_record(@session, OrientDbClient::Rid.new(1,0), {}, :none)
+    version = @connection.update_record(@session, OrientDBClient::Rid.new(1,0), {}, :none)
 
     assert_equal expected_version, version
   end
 
   def test_opening_the_server
-    OrientDbClient::Protocols::Protocol7.stubs(:connect).returns({
+    OrientDBClient::Protocols::Protocol7.stubs(:connect).returns({
       :session => @session,
       :message_content => { :session => @session }
     })
@@ -63,12 +63,12 @@ class TestConnection < MiniTest::Unit::TestCase
       :password => @options["server_password"]
     })
 
-    assert_instance_of OrientDbClient::ServerSession, session
+    assert_instance_of OrientDBClient::ServerSession, session
     assert_equal @session, session.id
   end
 
   def test_opening_a_database
-    OrientDbClient::Protocols::Protocol7.stubs(:db_open).returns({
+    OrientDBClient::Protocols::Protocol7.stubs(:db_open).returns({
       :session => @session,
       :message_content => { :session => @session, :clusters => [] }
     })
@@ -78,7 +78,7 @@ class TestConnection < MiniTest::Unit::TestCase
   		:password => @options["password"]
   	})
 
-  	assert_instance_of OrientDbClient::DatabaseSession, session
+  	assert_instance_of OrientDBClient::DatabaseSession, session
     assert_equal @session, session.id
   end
 end

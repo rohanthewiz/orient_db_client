@@ -1,6 +1,6 @@
 require_relative './session'
 
-module OrientDbClient
+module OrientDBClient
 	class ServerSession < Session
 		def create_local_database(database, options = {})
 			options[:storage_type] = :plocal

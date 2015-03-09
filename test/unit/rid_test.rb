@@ -9,7 +9,7 @@ class TestRid < MiniTest::Unit::TestCase
   end
 
   def test_new_with_string
-    rid = OrientDbClient::Rid.new(@reference)
+    rid = OrientDBClient::Rid.new(@reference)
 
     assert_equal @reference, rid.to_s
     assert_equal @cluster_id, rid.cluster_id
@@ -17,7 +17,7 @@ class TestRid < MiniTest::Unit::TestCase
   end
 
   def test_new_with_components
-    rid = OrientDbClient::Rid.new(@cluster_id, @cluster_position)
+    rid = OrientDBClient::Rid.new(@cluster_id, @cluster_position)
 
     assert_equal @reference, rid.to_s
     assert_equal @cluster_id, rid.cluster_id
@@ -25,7 +25,7 @@ class TestRid < MiniTest::Unit::TestCase
   end
 
   def test_null
-    rid = OrientDbClient::Rid.new
+    rid = OrientDBClient::Rid.new
 
     assert_equal '#', rid.to_s
   end

@@ -2,7 +2,7 @@ require_relative '../rid'
 
 require 'base64'
 
-module OrientDbClient
+module OrientDBClient
     module Serializers
         class Serializer7
             @@string_matcher = /^"[^"]*"$/
@@ -151,7 +151,7 @@ module OrientDbClient
             end
 
             def serialize_rid(value)
-                value = OrientDbClient::Rid.new(value.to_s) unless value.is_a?(OrientDbClient::Rid)
+                value = OrientDBClient::Rid.new(value.to_s) unless value.is_a?(OrientDBClient::Rid)
 
                 "#{value.to_s}"
             end
@@ -172,7 +172,7 @@ module OrientDbClient
             end
 
             def serialize_unknown(value)
-                if value.is_a?(OrientDbClient::Rid)
+                if value.is_a?(OrientDBClient::Rid)
                     serialize_rid(value)
                 elsif value.is_a?(String)
                     serialize_string(value)

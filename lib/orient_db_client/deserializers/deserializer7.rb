@@ -2,7 +2,7 @@ require_relative '../rid'
 require 'bindata'
 require 'base64'
 
-module OrientDbClient
+module OrientDBClient
   module Deserializers
 
     class QueryRecord < BinData::Record
@@ -42,14 +42,14 @@ module OrientDbClient
 
       def deserialize(text)
         records = []
-        struct_info = {}
 
         # Get rid of server signature
         binstr = text.gsub(/^\x00\x00\x00.{2,68}\)/, '')
-
+        return { session: nil, message_content: records } if binstr.length < 5 # shortest valid response
         binstr = binstr[1..-1]
         binstr, session = grab(binstr, 4, true)
         binstr, result_type = grab(binstr, 1)
+        # puts "#{result_type} --> #{binstr}"
 
         case result_type
 
@@ -57,27 +57,37 @@ module OrientDbClient
           binstr, col_len = grab(binstr, 4, true)
           qr = QueryRecord.new
           col_len.times do
+            fields = { :document => {}, :structure => {} }
+            struct_info = {}
             bytes_consumed = 0
             record = qr.read(binstr)
             bytes_consumed += record.do_num_bytes
-            fields = {}
+
             if record.record_type.do_num_bytes > 0
               fields[:record_type] = record.record_type.chr
             end
             if record.cluster_id.do_num_bytes > 0
-              fields[:rid] = OrientDbClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
+              fields[:rid] = OrientDBClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
             end
+
+            # Parse the document proper
             tokens = record.properties.split(',')
             while token = tokens.shift
+              # case of class
               arr = token.split('@', 2)
               if arr.length == 2
                 fields[:class] = arr[0]
                 token = arr[1]
               end
               field, value = parse_field(token, tokens, struct_info)
-              fields[field] = value unless field == :delimiter || field == :property_len
+              fields[field] = value if field == :class  # unless field == :delimiter || field == :property_len
+
+              fields[:document][field] = value
+              fields[:structure][field] = struct_info[:type]
             end
+
             records << fields
+
             binstr = binstr[bytes_consumed .. -1]
           end
 
@@ -85,7 +95,7 @@ module OrientDbClient
           return { session: session, message_content: nil }
 
         when 'a'
-          resp = OrientDbClient::Deserializers::StringResponse.new.read(binstr)
+          resp = OrientDBClient::Deserializers::StringResponse.new.read(binstr)
           return { session: session, message_content: resp[:response] }
 
         when 'r'
@@ -103,37 +113,14 @@ module OrientDbClient
         [binary_string[n_bytes .. -1], slice]
       end
 
-      # def old_deserialize(text) # Perhaps this one is purely document based - TODO
-      #     result = { :document => {}, :structure => {} }
-      #     struct_info = {}
-      #
-      #     serialized_record = text
-      #
-      #     if m = serialized_record.match(/([^,@]+)@/)
-      #         result[:class] = m[1]
-      #         serialized_record.gsub!(/^[^@]*@/, '')
-      #     end
-      #
-      #     tokens = serialized_record.split(",")
-      #
-      #     while token = tokens.shift
-      #         field, value = parse_field(token, tokens, struct_info)
-      #
-      #         result[:document][field] = value
-      #         result[:structure][field] = struct_info[:type]
-      #     end
-      #
-      #     result
-      # end
-
       private
 
+      # If the token was split too short on ','
       def close_token!(token, cap, join, tokens)
         while token[token.length - 1] != cap && tokens.length > 0
           token << join if join
           token << tokens.shift
         end
-
         token
       end
 
@@ -153,7 +140,7 @@ module OrientDbClient
         field = remove_ends(field) if field.match(@@string_matcher)
 
         if (field =~ /^(in|out)_/) != nil
-          value = parse_rid_bag(value)
+          value =  parse_rid_bag(value)
         else
           value = parse_value(value, tokens, struct_info)
         end
@@ -163,14 +150,16 @@ module OrientDbClient
 
       def parse_rid_bag(value)
         value = Base64.decode64(value)
+        return '' if value.length < 1
         rb = RidBag.new.read value
-        return 0 if rb.rid_count < 1
+
+        return [] if rb.rid_count < 1
         value = value[5..-1]
         rid_bin = RidBin.new
         rids = []
         rb.rid_count.times do
           r = rid_bin.read(value)
-          rids << OrientDbClient::Rid.new("##{r.cluster_id}:#{r.cluster_position}")
+          rids << OrientDBClient::Rid.new("##{r.cluster_id}:#{r.cluster_position}")
           value = value[10..-1]
         end
         rids
@@ -182,45 +171,49 @@ module OrientDbClient
 
       def parse_value(value, tokens, struct_info = {})
         struct_info[:type] = nil
+        return nil unless value
 
         case value[0]
           when '['
             close_token!(value, ']', ',', tokens)
-
             sub_tokens = remove_ends(value).split(',')
-
             value = []
 
             while element = sub_tokens.shift
               value << parse_value(element, sub_tokens)
             end
-
             struct_info[:type] = :collection
-
             value
+
+          when '<'
+            close_token!(value, '>', ',', tokens)
+            sub_tokens = remove_ends(value).split(',')
+            value = []
+
+            while element = sub_tokens.shift
+              value << parse_value(element, sub_tokens)
+            end
+            struct_info[:type] = :collection
+            value
+
           when '{'
             close_token!(value, '}', ',', tokens)
-
             struct_info[:type] = :map
+            deserialize(remove_ends(value))[:document]
 
-            value = deserialize(remove_ends(value))[:document]
           when '('
             close_token!(value, ')', ',', tokens)
-
             struct_info[:type] = :document
-
             deserialize remove_ends(value)
+
           when '*'
             close_token!(value, '*', ',', tokens)
-
             struct_info[:type] = :document
-
             deserialize remove_ends(value)
+
           when '"'
             close_token!(value, '"', ',', tokens)
-
             struct_info[:type] = :string
-
             value.gsub! /^\"/, ''
             value.gsub! /\"$/, ''
           when '_'
@@ -230,7 +223,7 @@ module OrientDbClient
             value = Base64.decode64(remove_ends(value))
           when '#'
             struct_info[:type] = :rid
-            value = OrientDbClient::Rid.new(value)
+            value = OrientDBClient::Rid.new(value)
           else
 
             value = if value.length == 0

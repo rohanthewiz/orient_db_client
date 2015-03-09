@@ -1,6 +1,6 @@
 require_relative './session'
 
-module OrientDbClient
+module OrientDBClient
 	class DatabaseSession < Session
 		attr_reader :clusters
 
@@ -41,11 +41,11 @@ module OrientDbClient
 		end
 
 		def delete_record(rid_or_cluster_id, cluster_position_or_version, version = nil)
-			if rid_or_cluster_id.is_a?(OrientDbClient::Rid)
+			if rid_or_cluster_id.is_a?(OrientDBClient::Rid)
 				rid = rid_or_cluster_id
 				version = cluster_position_or_version.to_i
 			else
-				rid = OrientDbClient::Rid.new(rid_or_cluster_id.to_i, cluster_position_or_version.to_i)
+				rid = OrientDBClient::Rid.new(rid_or_cluster_id.to_i, cluster_position_or_version.to_i)
 				version = version
 			end
 			
@@ -66,7 +66,7 @@ module OrientDbClient
 
 		def load_record(rid_or_cluster_id, cluster_position = nil)
 			if rid_or_cluster_id.is_a?(Fixnum)
-				rid_or_cluster_id = OrientDbClient::Rid.new(rid_or_cluster_id, cluster_position)
+				rid_or_cluster_id = OrientDBClient::Rid.new(rid_or_cluster_id, cluster_position)
 			end
 			
 			@connection.load_record(@id, rid_or_cluster_id)[:message_content]
@@ -86,7 +86,7 @@ module OrientDbClient
 
 		def update_record(record, rid_or_cluster_id, cluster_position_or_version, version = :none)
 			if rid_or_cluster_id.is_a?(Fixnum)
-				rid = OrientDbClient::Rid.new(rid_or_cluster_id, cluster_position_or_version)
+				rid = OrientDBClient::Rid.new(rid_or_cluster_id, cluster_position_or_version)
 				version = version
 			else
 				rid = rid_or_cluster_id

@@ -1,4 +1,4 @@
-module OrientDbClient
+module OrientDBClient
 	class UnsupportedProtocolError < StandardError
 		def initialize(version)
 			super "The host reports protocol version #{version}, which is not currently supported by this driver."

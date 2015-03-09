@@ -2,7 +2,7 @@ require_relative './database_session'
 require_relative './server_session'
 require_relative './protocol_factory'
 
-module OrientDbClient
+module OrientDBClient
   class Connection
   	def initialize(socket, protocol_version, options = {})
   		@socket = socket
@@ -35,7 +35,7 @@ module OrientDbClient
         else
           @protocol.datacluster_datarange(@socket, session, cluster_id_or_name)
         end
-      rescue OrientDbClient::ProtocolError => err
+      rescue OrientDBClient::ProtocolError => err
         case err.exception_class
         when 'java.lang.IndexOutOfBoundsException', 'java.lang.IllegalArgumentException'
           result = false
@@ -65,7 +65,7 @@ module OrientDbClient
       response = @protocol.record_create(@socket, session, cluster_id, record)
       message_content = response[:message_content]
 
-      OrientDbClient::Rid.new(message_content[:cluster_id], message_content[:cluster_position])
+      OrientDBClient::Rid.new(message_content[:cluster_id], message_content[:cluster_position])
     end
 
     def database_exists?(session, database)
@@ -94,7 +94,7 @@ module OrientDbClient
     end
 
     def load_record(session, rid)
-      rid = OrientDbClient::Rid.new(rid) if rid.is_a?(String)
+      rid = OrientDBClient::Rid.new(rid) if rid.is_a?(String)
 
       result = @protocol.record_load(@socket, session, rid)
 

@@ -38,11 +38,11 @@ Before obtaining server or database sessions, a connection must be made to an Or
 
     require 'orient_db_client'
 
-    connection = OrientDbClient.connect('localhost')
+    connection = OrientDBClient.connect('localhost')
 
 If you need to specify the port, pass it in the options Hash:
 
-    connection = OrientDbClient.connect('localhost', :port => 2424)
+    connection = OrientDBClient.connect('localhost', :port => 2424)
 
 When you're done with the connection (and all of the sessions you have opened within it):
 
@@ -116,7 +116,7 @@ Creating a record is straightforward:
 
     rid = database.create_record(cluster_id, record)
 
-The return value is an OrientDbClient::Rid.  You can get the native "#i:p" form by calling #to_s on the returned Rid.
+The return value is an OrientDBClient::Rid.  You can get the native "#i:p" form by calling #to_s on the returned Rid.
 
 An existing record can be read using #load_Record:
 

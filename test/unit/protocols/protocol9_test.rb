@@ -26,7 +26,7 @@ class TestProtocol9 < MiniTest::Unit::TestCase
   end
 
   def setup
-    @protocol = OrientDbClient::Protocols::Protocol9
+    @protocol = OrientDBClient::Protocols::Protocol9
     @protocol_version = @protocol::VERSION
     @session = 62346
     @database = 'test_database'
@@ -184,7 +184,7 @@ class TestProtocol9 < MiniTest::Unit::TestCase
 
     expect_sequence @socket, chain, 'response'
 
-    result = @protocol.record_load(@socket, @session, OrientDbClient::Rid.new(cluster_id, cluster_position))
+    result = @protocol.record_load(@socket, @session, OrientDBClient::Rid.new(cluster_id, cluster_position))
 
     assert_equal @session, result[:session]
   end
