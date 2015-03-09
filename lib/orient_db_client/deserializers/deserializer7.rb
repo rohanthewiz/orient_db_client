@@ -30,6 +30,12 @@ module OrientDbClient
       # string						:rids, :read_length => :rid_count
     end
 
+    class StringResponse < BinData::Record
+      endian      :big
+      int32       :response_len
+      string      :response, :read_length => :response_len
+    end
+
     class Deserializer7
       @@string_matcher = /^"[^"]*"$/
 
@@ -75,8 +81,16 @@ module OrientDbClient
             binstr = binstr[bytes_consumed .. -1]
           end
 
+        when 'n'
+          return { session: session, message_content: nil }
+
+        when 'a'
+          resp = OrientDbClient::Deserializers::StringResponse.new.read(binstr)
+          return { session: session, message_content: resp[:response] }
+
         when 'r'
-          # do for single record
+          # TODO for single record
+            puts 'We may not need implement this, but TODO for sure'
         end
 
         { session: session, message_content: records }

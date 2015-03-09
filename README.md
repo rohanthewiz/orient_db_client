@@ -38,11 +38,11 @@ Before obtaining server or database sessions, a connection must be made to an Or
 
     require 'orient_db_client'
 
-    connection = OrientDBClient.connect('localhost')
+    connection = OrientDbClient.connect('localhost')
 
 If you need to specify the port, pass it in the options Hash:
 
-    connection = OrientDBClient.connect('localhost', :port => 2424)
+    connection = OrientDbClient.connect('localhost', :port => 2424)
 
 When you're done with the connection (and all of the sessions you have opened within it):
 
@@ -139,9 +139,10 @@ To delete a record:
     database.delete_record(rid, version)
 
 The version must match the version number of the record as it is currently stored in the database.
+### Send Commands (Check it out for me please - should be working good)
+    database.command('create class Stuff extends V') # a non-nil message response is usually good
 
-
-### Querying (Experimental)
+### Querying (Should be working good)
 
 OrientDB implements a SQL-like language that can be used to query records, add/alter/remove clusters, add/alter/remove classes, and more.  See the [SQL section](http://code.google.com/p/orient/wiki/SQL) of OrientDB's Wiki for more information.
 

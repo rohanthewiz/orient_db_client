@@ -314,14 +314,16 @@ module OrientDbClient
 				end
 
 				query = QueryMessage.new :query_class_name => options[:query_class_name],
-																 :text => command # leave this to the -1 default for now, :non_text_limit => options[:non_text_limit] || options[:limit]
+																 :text => command # leave :non_text_limit to the -1 default for now, :non_text_limit => options[:non_text_limit] || options[:limit]
 				command = Commands::Command.new :session => session,
 																				:mode => options[:async] ? 'a'.ord : 's'.ord,
 																				:command_serialized => query.to_binary_s
 				command.write(socket)
-        while socket.stat.size < 70 do
-            sleep 0.01
-            socket.stat
+        # socket may need a little time
+        5.times do
+          socket.stat
+          break if socket.stat.size > 60
+          sleep 0.05
         end
         payload = socket.recvfrom(socket.stat.size) # I have to read everything at once or socket drops data
         payload = payload.first if payload.respond_to? :each

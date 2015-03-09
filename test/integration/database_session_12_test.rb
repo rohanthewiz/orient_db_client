@@ -96,9 +96,13 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
   end
   
   def test_create_class
-    skip # haven't touched this yet
-  	@connection.command(@session.id, "Create class testclass")
-  	@connection.command(@session.id, "drop class testclass")
+    res = @session.command('create class testclass'); puts res # cluster id of the class is returned
+    refute_nil res[:message_content], 'Failed to create class TestClass'
+    res = @session.command('drop class testclass'); puts res
+    assert_equal 'true', res[:message_content], 'Failed to drop TestClass'
+
+    # @connection.command(@session.id, "Create class testclass")
+  	# @connection.command(@session.id, "drop class testclass")
   end
   
   def test_create_and_delete_record12

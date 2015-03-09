@@ -76,6 +76,10 @@ module OrientDbClient
 			@connection.query(@id, text, options)
 		end
 
+		def command(text, options = {})
+			@connection.command(@id, text, options)
+		end
+
 		def reload
 			@connection.reload(@id)
 		end
