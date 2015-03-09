@@ -1,5 +1,8 @@
 OrientDB Client
 ===============
+*This is fork of jhstatewide/orient_db_client. It is in pre-alpha stage at the moment but don't be discouraged by that*.
+I have a good handle on the binary transport and several integration tests passing.
+The public interface will be reworked and solidified very soon. Hold on...
 
 This gem is a very rough initial attempt at a Network Binary Protocol driver for OrientDB.
 

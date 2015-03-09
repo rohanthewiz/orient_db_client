@@ -1,4 +1,5 @@
 require File.join File.dirname(__FILE__), '..', 'test_helper'
+require 'json'
 
 class TestDatabaseSession < MiniTest::Unit::TestCase
     include ServerConfig
@@ -26,8 +27,8 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
   end
 
   def test_single_query
-    result = @session.query("select from Animal")
-    puts result
+    result = @session.query("select from V")
+    puts result.to_json
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
 
