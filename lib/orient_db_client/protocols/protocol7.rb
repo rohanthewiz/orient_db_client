@@ -117,7 +117,7 @@ module OrientDBClient
 					protocol_string :driver,					:value => DRIVER_NAME
 					protocol_string	:driver_version,	:value => DRIVER_VERSION
 					int16						:version
-					protocol_string	:client_id
+					protocol_string	:client_id        # todo - see if there is any value to setting a client_id here
 					protocol_string	:user
 					protocol_string :password
 				end
@@ -320,17 +320,17 @@ module OrientDBClient
 																				:command_serialized => query.to_binary_s
 				command.write(socket)
         # socket may need a little time
-        5.times do
-          socket.stat
-          break if socket.stat.size > 60
-          sleep 0.05
-        end
+        # 3.times do
+        #   socket.stat
+        #   break if socket.stat.size > 60
+        #   sleep 0.01
+        # end
+        read_byte(socket) # 1st byte is an error bit, but since there is another in the payload, ignore for now
+        resp_session = read_integer(socket)
         payload = socket.recvfrom(socket.stat.size) # I have to read everything at once or socket drops data
         payload = payload.first if payload.respond_to? :each
-        command_results = OrientDBClient::Deserializers::Deserializer7.new.deserialize(payload)
-
-				{ :session          => command_results[:session],
-				  :message_content 	=> command_results }
+        command_results = deserializer.deserialize(payload)
+				{ message_content: { session: resp_session, message_content: command_results }}
 			end
 
 			def self.connect(socket, options = {})
@@ -670,13 +670,13 @@ module OrientDBClient
 				{ :result => read_byte(socket) }
 			end
 
-			def self.read_db_open(socket)
-			  session = read_integer(socket)
-			  clusters = read_clusters(socket)
-			  { :session 			=> session,
-				  :clusters 		=> clusters,
-				  :cluster_config 	=> read_string(socket)	}
-			end
+			# def self.read_db_open(socket)
+			#   session = read_integer(socket)
+			#   clusters = read_clusters(socket)
+			#   { :session 			=> session,
+			# 	  :clusters 		=> clusters,
+			# 	  :cluster_config 	=> read_string(socket) }
+			# end
 
 			def self.read_db_reload(socket)
 				{ :clusters => read_clusters(socket) }
@@ -751,7 +751,6 @@ module OrientDBClient
 
 			def self.read_response(socket)
 				result = read_byte(socket)
-        puts "Status response: #{result}" # TODO remove for production
 				raise_response_error(socket) unless result == Statuses::OK
 			end
 

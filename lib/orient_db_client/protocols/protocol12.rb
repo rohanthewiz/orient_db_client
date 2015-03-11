@@ -101,7 +101,6 @@ module OrientDBClient
 
       def self.read_clusters(socket)
         clusters = []
-
         num_clusters = read_short(socket)
         (num_clusters).times do |x|
           cluster =
@@ -112,9 +111,7 @@ module OrientDBClient
             :data_segment => read_short(socket)
           }
           clusters << cluster
-
         end
-
         clusters
       end
 
@@ -146,9 +143,11 @@ module OrientDBClient
       def self.read_db_open(socket)
         session = read_integer(socket)
         clusters = read_clusters(socket)
-        { :session      => session,
-          :clusters     => clusters,
-          :cluster_config   => read_string(socket)  }
+        read_string(socket) # throw away null string
+
+        { :session        => session,
+          :clusters       => clusters,
+          :server_release => read_string(socket) }
       end
 
       def self.record_create(socket, session, cluster_id, record)
@@ -172,9 +171,8 @@ module OrientDBClient
         command.write(socket)
 
         read_response(socket)
-
-        { :session          => read_integer(socket),
-          :message_content  => read_db_open(socket) }
+        read_integer(socket) # throw away this unused int (usually -1)
+        { :message_content  => read_db_open(socket) }
       end
 
       def self.config_get(socket, session, config_name)
@@ -183,7 +181,7 @@ module OrientDBClient
 
         config.write(socket)
 
-        response = read_response(socket)
+        read_response(socket)
         { :session => read_integer(socket),
           :value => read_string(socket) }
 

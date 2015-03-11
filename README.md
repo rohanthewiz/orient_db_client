@@ -1,26 +1,27 @@
 OrientDB Client
 ===============
 *This is fork of jhstatewide/orient_db_client. It is in pre-alpha stage at the moment but don't be discouraged by that*.
-I have a good handle on the binary transport and several integration tests passing.
-The public interface will be reworked and solidified very soon. Hold on...
+The Gem is now working nicely and command and queries can be passed through
 
-This gem is a very rough initial attempt at a Network Binary Protocol driver for OrientDB.
+    db_session.command('select from Thing')
+
+The public interface will be reworked and solidified very soon. Hold on...
 
 While in this early stage of development, the public interface is subject to change with no warning.
 
-This is my first attempt at building a gem intended for public use.  Expect some difficulty getting this gem up and running in your projects.
+You probably shouldn't use this in production just yet.
 
 
 Supported OrientDB Releases
 ---------------------------
 
-I've tested this against OrientDB-1.0rc9 which is the current official release as of writing this README.
+I've tested this against OrientDB-2.0.x which is the current official release as of writing this README.
 
 
 Supported Ruby Versions
 ---------------------------
 
-This gem has only been tested on 1.9.2 and 1.9.3.  It *should* run on any 1.9 install, and will definitely NOT run on 1.8 due to the use of Encoding.  Compatibility with 1.8 is planned, but not scheduled for any particular milestone yet.
+This gem has only been tested on 1.9.3. It should work on later versions. More tests soon.
 
 
 Basic Usage
@@ -30,11 +31,11 @@ There are two classifications of interaction with the OrientDB server:  Server a
 
 A server session is used for creating and deleting databases, as well as confirming their existence.  (Setting and reading the server configuration is also part of the protocol, but not yet supported by this gem.)
 
-A database session is used to performed all other work on a database, including but not limited to record CRUD operations, querying, and managing clusters (which are the physical files and logical subdivisions of an OrientDB database, not to be confused with clustering in the networking sense.)
+A database session is used to performe all other work on a database, including but not limited to record CRUD operations, querying, and managing clusters (which are the physical files and logical subdivisions of an OrientDB database, not to be confused with clustering in the networking sense.)
 
 ## Connecting to an OrientDB Server
 
-Before obtaining server or database sessions, a connection must be made to an OrientDB server instance.  There isn't much to this part.
+Before obtaining server or database sessions, a connection must be made to an OrientDB server instance:
 
     require 'orient_db_client'
 
@@ -88,6 +89,16 @@ Most work in OrientDB will be done with database sessions.  To open one:
 
 ### CRUD
 
+Use the command interface to run all SQL commands/queries, it's simple and it works.
+
+    database.command('create class Family extends V')
+    database.command("insert into Family set name = 'Smith'")
+    database.command("select from Family where name = 'Johnson'")
+
+#### Please disregard the below.
+** OLD STUFF ** Some of the convenience methods below can certainly be added in the future. Don't use them at the moment.
+
+-----------------------------------------
 By default, a database contains the following clusters:  internal, index, default, orids, orole, and ouser.  (I'm not entirely sure what that default cluster is for, so I don't write to it.  It may be an all-purpose starter cluster though.)
 
 Before records can be stored in the database, a cluster must be created to contain them.  Create one like this:
@@ -139,10 +150,8 @@ To delete a record:
     database.delete_record(rid, version)
 
 The version must match the version number of the record as it is currently stored in the database.
-### Send Commands (Check it out for me please - should be working good)
-    database.command('create class Stuff extends V') # a non-nil message response is usually good
 
-### Querying (Should be working good)
+#### Querying (Should be working good)
 
 OrientDB implements a SQL-like language that can be used to query records, add/alter/remove clusters, add/alter/remove classes, and more.  See the [SQL section](http://code.google.com/p/orient/wiki/SQL) of OrientDB's Wiki for more information.
 
@@ -155,8 +164,9 @@ This should return an array of deserialized records.
 
 **NOTE: Expect this to be buggy right now.**  *OrientDB's protocol mentions several possible return values from a query, but I've only been able to get it to return record collections in practice.  As such, I've not coded for the possibility of getting back a single record, getting back raw data, or getting back a flat response.  I'm not even sure what the latter two look like when they come out of the OrientDB server.*
 
-Testing
--------
+### Testing
+
+   Tests need to be completely reworked - It's very high on the TODO
 
     rake test:unit
 

@@ -122,7 +122,7 @@ module OrientDBClient
       session = response[:session]
       message_content = response[:message_content]
 
-      @sessions[session] = DatabaseSession.new(message_content[:session], self, message_content[:clusters])
+      @sessions[session] = DatabaseSession.new(message_content[:session], self, message_content[:clusters], message_content[:server_release])
   	end
 
     def query(session, text, options = {})

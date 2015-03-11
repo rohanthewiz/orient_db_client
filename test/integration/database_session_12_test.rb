@@ -1,5 +1,6 @@
 require File.join File.dirname(__FILE__), '..', 'test_helper'
 require 'json'
+require 'benchmark'
 
 class TestDatabaseSession < MiniTest::Unit::TestCase
     include ServerConfig
@@ -8,7 +9,6 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     def setup
         @options = SERVER_OPTIONS
         @connection = connect_to_orientdb(SERVER_OPTIONS)
-
         @session = @connection.open_database(@options["database"], {
             :user => @options["user"],
             :password => @options["password"]
@@ -46,9 +46,14 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     end
   end
 
+
   def test_single_query
-    result = @session.query('select from V')
-    puts JSON.pretty_generate(result)
+    result = {}
+    Benchmark.realtime do
+      result = @session.command("select from Family where name = 'Johnson'")
+      # result = @session.command("create edge Owns from (select from Person where name = 'Farmer') to (select from Car where name = 'Mazda 626')")
+    end
+    puts "\n" + JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
 

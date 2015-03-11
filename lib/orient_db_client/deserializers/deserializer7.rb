@@ -39,81 +39,105 @@ module OrientDBClient
     class Deserializer7
       @@string_matcher = /^"[^"]*"$/
 
-
       def deserialize(text)
         records = []
+        special_content = nil
 
-        # Get rid of server signature
-        binstr = text.gsub(/^\x00\x00\x00.{2,68}\)/, '')
-        return { session: nil, message_content: records } if binstr.length < 5 # shortest valid response
-        binstr = binstr[1..-1]
-        binstr, session = grab(binstr, 4, true)
-        binstr, result_type = grab(binstr, 1)
-        # puts "#{result_type} --> #{binstr}"
+        binstr, result_type = grab(text, 1)
+        puts "result_type: #{result_type == "\x01" ? "1" : result_type}, response_length: #{binstr.length} bytes"
 
         case result_type
 
         when 'l' # a collection of records
           binstr, col_len = grab(binstr, 4, true)
-          qr = QueryRecord.new
+          puts "records: #{col_len}"
           col_len.times do
-            fields = { :document => {}, :structure => {} }
-            struct_info = {}
-            bytes_consumed = 0
-            record = qr.read(binstr)
-            bytes_consumed += record.do_num_bytes
-
-            if record.record_type.do_num_bytes > 0
-              fields[:record_type] = record.record_type.chr
-            end
-            if record.cluster_id.do_num_bytes > 0
-              fields[:rid] = OrientDBClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
-            end
-
-            # Parse the document proper
-            tokens = record.properties.split(',')
-            while token = tokens.shift
-              # case of class
-              arr = token.split('@', 2)
-              if arr.length == 2
-                fields[:class] = arr[0]
-                token = arr[1]
-              end
-              field, value = parse_field(token, tokens, struct_info)
-              fields[field] = value if field == :class  # unless field == :delimiter || field == :property_len
-
-              fields[:document][field] = value
-              fields[:structure][field] = struct_info[:type]
-            end
-
-            records << fields
-
-            binstr = binstr[bytes_consumed .. -1]
+            res = read_record(binstr)
+            records << res[0] # fields
+            binstr = binstr[res[1] .. -1] # res[1] is bytes consumed
           end
 
         when 'n'
-          return { session: session, message_content: nil }
+          special_content = 'none'
 
         when 'a'
           resp = OrientDBClient::Deserializers::StringResponse.new.read(binstr)
-          return { session: session, message_content: resp[:response] }
+          special_content = resp[:response]
 
         when 'r'
-          # TODO for single record
-            puts 'We may not need implement this, but TODO for sure'
+          records << read_record(binstr)[0]
+          puts 'records: 1'
+        else
+          # check for hex number
+          result_type = result_type.unpack('H*').first
+          if result_type == '01' # we have an error
+            special_content = read_error_response(binstr)
+            puts special_content
+          end
         end
 
-        { session: session, message_content: records }
+        special_content ? special_content : records
+      end
+
+      private
+
+      def read_record(binstr)
+        fields = { :document => {}, :structure => {} }
+        struct_info = {}
+        bytes_consumed = 0
+
+        qr = QueryRecord.new
+        record = qr.read(binstr)
+        bytes_consumed += record.do_num_bytes
+
+        if record.cluster_id.do_num_bytes > 0
+          fields[:rid] = OrientDBClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
+        end
+
+        # Parse the document proper
+        tokens = record.properties.split(',')
+        while token = tokens.shift
+          arr = token.split('@', 2) # case of class
+          if arr.length == 2
+            fields[:class] = arr[0]
+            token = arr[1]
+          end
+          field, value = parse_field(token, tokens, struct_info)
+          fields[field] = value if field == :class  # unless field == :delimiter || field == :property_len
+
+          fields[:document][field] = value
+          fields[:structure][field] = struct_info[:type]
+        end
+
+        [fields, bytes_consumed]
+      end
+
+      def read_error_response(binstr)
+        errs = []; offset = 0
+        4.times do |i|
+          break unless offset < binstr.length - 1
+          resp = OrientDBClient::Deserializers::StringResponse.new.read(binstr[offset .. -1])
+          errs << resp[:response]
+          offset += resp.do_num_bytes
+          if i == 1
+            upk = binstr[offset .. -1].unpack("H*").first.to_i(16)
+            break if upk != 1
+            offset += 1
+          end
+        end
+        errs.join("\n")
       end
 
       def grab(binary_string, n_bytes, to_int = false)
         slice = binary_string[0..(n_bytes -1)]
-        slice = slice.unpack("H*").first.to_i(16) if to_int
+        slice = unpack_hex_bytes(slice) if to_int
 
         [binary_string[n_bytes .. -1], slice]
       end
 
-      private
+      def unpack_hex_bytes(slice)
+        slice.unpack("H*").first.to_i(16)
+      end
 
       # If the token was split too short on ','
       def close_token!(token, cap, join, tokens)

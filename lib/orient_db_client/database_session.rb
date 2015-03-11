@@ -2,11 +2,11 @@ require_relative './session'
 
 module OrientDBClient
 	class DatabaseSession < Session
-		attr_reader :clusters
+		attr_reader :clusters, :server_release
 
-		def initialize(id, connection, clusters = [])
+		def initialize(id, connection, clusters = [], server_release = '')
 			super id, connection
-
+      @server_release = server_release
 			store_clusters(clusters)			
 		end
 
