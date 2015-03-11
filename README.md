@@ -95,7 +95,7 @@ Use the command interface to run all SQL commands/queries, it's simple and it wo
     database.command("insert into Family set name = 'Smith'")
     database.command("select from Family where name = 'Johnson'")
 
-#### Please disregard the below.
+### Please disregard everything below.
 ** OLD STUFF ** Some of the convenience methods below can certainly be added in the future. Don't use them at the moment.
 
 -----------------------------------------
