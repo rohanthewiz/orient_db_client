@@ -4,6 +4,8 @@ require_relative './protocol_factory'
 
 module OrientDBClient
   class Connection
+    attr_accessor :sessions
+
   	def initialize(socket, protocol_version, options = {})
   		@socket = socket
   		@protocol = (options[:protocol_factory] || ProtocolFactory).get_protocol(protocol_version)
@@ -11,15 +13,32 @@ module OrientDBClient
   	end
 
   	def close
-  	  @socket.close
+      # First close any db sessions on this connection
+      if @sessions.length > 0
+        db_sessions = @sessions.map do |key, val|
+          "session_id: #{key}, database: #{val.is_a?(OrientDBClient::DatabaseSession) ? val.database : 'none'}"
+        end
+        puts "Cannot close connection while the following sessions are still open #{db_sessions.join(', ')}"
+      else
+    	  @socket.close unless @socket.closed?
+      end
   	end
   	
   	def config_get(session, config_name)
   	  @protocol.config_get(@socket, session, config_name)
-  	end
+    end
 
-    def close_database(session)
+    def close_db_session(session)
       @protocol.db_close(@socket, session)
+      remove_session(session)
+    end
+
+    def remove_session(session)
+      @sessions.delete(session)
+    end
+
+    def close_all_sessions
+      @sessions.values.map(&:close) # s.send :close
     end
 
     def closed?
@@ -65,7 +84,8 @@ module OrientDBClient
       response = @protocol.record_create(@socket, session, cluster_id, record)
       message_content = response[:message_content]
 
-      OrientDBClient::Rid.new(message_content[:cluster_id], message_content[:cluster_position])
+      OrientDBClient::Rid.new(message_content[:cluster_id],
+                              message_content[:cluster_position])
     end
 
     def database_exists?(session, database)
@@ -84,7 +104,8 @@ module OrientDBClient
     end
 
     def delete_record(session, rid, version)
-      response = @protocol.record_delete(@socket, session, rid.cluster_id, rid.cluster_position, version)
+      response = @protocol.record_delete(@socket, session, rid.cluster_id,
+                                         rid.cluster_position, version)
 
       response[:message_content][:result] == 1
     end
@@ -111,18 +132,19 @@ module OrientDBClient
 
     def open_server(options = {})
       response = @protocol.connect(@socket, options)
-      session = response[:session]
       message_content = response[:message_content]
+      session_id = message_content[:session]
 
-      @sessions[session] = ServerSession.new(message_content[:session], self)
+      @sessions[session_id] = ServerSession.new(session_id, self)
     end
 
   	def open_database(database, options = {})
   		response = @protocol.db_open(@socket, database, options)
-      session = response[:session]
       message_content = response[:message_content]
-
-      @sessions[session] = DatabaseSession.new(message_content[:session], self, message_content[:clusters], message_content[:server_release])
+      session_id = message_content[:session]
+      @sessions[session_id] = DatabaseSession.new(database, session_id, self,
+                                               message_content[:clusters],
+                                               message_content[:server_release])
   	end
 
     def query(session, text, options = {})

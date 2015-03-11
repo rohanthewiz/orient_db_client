@@ -2,16 +2,23 @@ require_relative './session'
 
 module OrientDBClient
 	class DatabaseSession < Session
-		attr_reader :clusters, :server_release
+    STATUS_OPENED = 'opened'.freeze
+    STATUS_CLOSED = 'closed'.freeze
+		attr_reader :database, :server_release, :clusters
+    attr_accessor :status
 
-		def initialize(id, connection, clusters = [], server_release = '')
+		def initialize(database, id, connection, clusters = [], server_release = '')
 			super id, connection
+      @database = database
       @server_release = server_release
-			store_clusters(clusters)			
+      @status = STATUS_OPENED
+      store_clusters(clusters)
 		end
 
-		def close
-			@connection.close_database(@id)
+		def close(kill_connection = true)
+      @connection.close_db_session(@id) if @status == STATUS_OPENED # close this session
+      @status = STATUS_CLOSED
+      super
 		end
 
 		def cluster_exists?(cluster_id)

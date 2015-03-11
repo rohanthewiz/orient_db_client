@@ -14,13 +14,12 @@ class TestServerSession < MiniTest::Unit::TestCase
 	end
 
 	def teardown
-		@connection.close if @connection
+    @session.close
+		@connection.close
 	end
 
   def test_database_exists_command
   	assert @session.database_exists?(@options["database"])
-
-    # here at version 2.0.3 orientdb seems to want to create the InvalidDB so don't run
   	refute @session.database_exists?("InvalidDatabase")
   end
   

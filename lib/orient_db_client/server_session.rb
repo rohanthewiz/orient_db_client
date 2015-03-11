@@ -2,7 +2,13 @@ require_relative './session'
 
 module OrientDBClient
 	class ServerSession < Session
-		def create_local_database(database, options = {})
+
+    def close(kill_connection = true)
+      @connection.remove_session @id
+      super
+    end
+
+    def create_local_database(database, options = {})
 			options[:storage_type] = :plocal
 
 			@connection.create_database(@id, database, options)

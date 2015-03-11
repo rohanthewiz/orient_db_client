@@ -3,28 +3,48 @@ require 'json'
 require 'benchmark'
 
 class TestDatabaseSession < MiniTest::Unit::TestCase
-    include ServerConfig
-    include ConnectionHelper
+  include ServerConfig
+  include ConnectionHelper
 
-    def setup
-        @options = SERVER_OPTIONS
-        @connection = connect_to_orientdb(SERVER_OPTIONS)
-        @session = @connection.open_database(@options["database"], {
-            :user => @options["user"],
-            :password => @options["password"]
-        })
-    end
-
-    def teardown
-        @connection.close if @connection
-    end
-
-  # The protocol documentation for DB_CLOSE is very ambiguous.
-  # As such, this test doesn't really do anything that makes sense...
-  def test_close
-    @session.close
-    refute @connection.closed?
+  def setup
+    @options = SERVER_OPTIONS
+    @connection = connect_to_orientdb(SERVER_OPTIONS)
+    @session = @connection.open_database(@options["database"], {
+        :user => @options["user"],
+        :password => @options["password"]
+    })
   end
+
+  def teardown
+    @session.close if @session
+    @connection.close if @connection && ! @connection.closed?
+  end
+
+  # Orient's DB_CLOSE kills access to the session, but returns no response
+  def test_close # send false here to leave the connection open
+    @session.close
+    assert @connection.closed?
+  end
+
+  # WIP
+  # def test_multi_session
+  #   # Create a temp db for the second session
+  #   database = 'temp--test'
+  #   svr = @connection.open_server(user: 'root', password: 'orient')
+  #  	begin
+    #   svr.create_local_database(database)
+    #   assert server.database_exists?(database)
+
+    #    session2 =
+
+    # ensure
+  #     svr.delete_database(database) if svr.database_exists?(database)
+    # end
+
+#
+  #   svr.close
+
+  # end
 
   def test_user_query
     result = @session.query("SELECT FROM OUser") # where name = 'admin'
@@ -36,7 +56,6 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
 
       content[0].tap do |record|
         assert record[:rid].is_a?(OrientDBClient::Rid)
-        assert_equal 'd', record[:record_type], "record_type should be 'd', it is #{record[:record_type]}"
         assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
         record[:document].tap do |fields |
           assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
@@ -45,7 +64,6 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
       end
     end
   end
-
 
   def test_single_query
     result = {}
