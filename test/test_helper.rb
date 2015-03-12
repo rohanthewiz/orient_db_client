@@ -7,4 +7,3 @@ Dir[File.expand_path(File.join(File.dirname(__FILE__),'support','**','*.rb'))].e
 
 require_relative '../lib/orient_db_client'
 require_relative '../lib/orient_db_client/exceptions'
-require 'pry-debugger'

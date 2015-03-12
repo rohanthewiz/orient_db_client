@@ -1,6 +1,7 @@
 require File.join File.dirname(__FILE__), '..', 'test_helper'
 require 'json'
 require 'benchmark'
+# require 'pry' # TODO remove for production
 
 class TestDatabaseSession < MiniTest::Unit::TestCase
   include ServerConfig
@@ -26,25 +27,33 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     assert @connection.closed?
   end
 
-  # WIP
-  # def test_multi_session
-  #   # Create a temp db for the second session
-  #   database = 'temp--test'
-  #   svr = @connection.open_server(user: 'root', password: 'orient')
-  #  	begin
-    #   svr.create_local_database(database)
-    #   assert server.database_exists?(database)
+  def test_multi_session # server session and database session should coexist
+    temp_db = 'a_very_temporary_database'
+    svr = @connection.open_server(user: 'root', password: 'orient')
+  	begin
+      svr.delete_database(temp_db) if svr.database_exists?(temp_db)
+      svr.create_local_database(temp_db)
+      assert svr.database_exists?(temp_db)
+      # Let's play with this temp db
+      db = OrientDBClient.db('localhost', temp_db, 'admin', 'admin') # This is a shortcut command
+      assert db.command('create class Person extends V')[:message_content].to_i.is_a? Integer
+      # db.command('create property Person.name string')
+      assert db.command('create class Car extends V')[:message_content].to_i.is_a? Integer
+      assert db.command('create class Owns extends E')[:message_content].to_i.is_a? Integer
+      assert db.command('insert into Person set name = "Johnny Boy"')[:message_content].is_a? Array
+      assert db.command('insert into Car set name = "Miata"')[:message_content].is_a? Array
+      assert db.command('create edge Owns from (select from Person where name = "Johnny Boy") to (select from Car where name = "Miata")')[:message_content].is_a? Hash
 
-    #    session2 =
+      assert (db.command('select from E'))[:message_content].is_a? Hash
+      puts JSON.pretty_generate(db.command("select expand(out('Owns')) from (select from Person where name = 'Johnny Boy')"))
+      db.close
 
-    # ensure
-  #     svr.delete_database(database) if svr.database_exists?(database)
-    # end
+    ensure
+      svr.delete_database(temp_db) if svr.database_exists?(temp_db)
+      svr.close
+    end
 
-#
-  #   svr.close
-
-  # end
+  end
 
   def test_user_query
     result = @session.query("SELECT FROM OUser") # where name = 'admin'
@@ -54,14 +63,14 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     result[:message_content].tap do |content|
       assert content.length > 1, 'There should be at least one user'
 
-      content[0].tap do |record|
-        assert record[:rid].is_a?(OrientDBClient::Rid)
-        assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
-        record[:document].tap do |fields |
-          assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
-          assert fields['roles'].is_a?(Array), "expected Array, but got #{fields['roles'].class}"
-        end
-      end
+      # content[0].tap do |record|
+      #   assert record[:rid].is_a?(OrientDBClient::Rid)
+      #   assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
+      #   record[:document].tap do |fields |
+      #     assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
+      #     assert fields['roles'].is_a?(Array), "expected Array, but got #{fields['roles'].class}"
+      #   end
+      # end
     end
   end
 
@@ -95,6 +104,13 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
 
+  def test_db_convenience_method
+    db = OrientDBClient.db('localhost', 'Corganizations', 'admin', 'admin') # create connection and session in one step
+    assert db.command('select from OUser')[:message_content].is_a? Hash
+    assert db.command('select from V limit 4')[:message_content].is_a? Hash
+    db.close
+  end
+
   def test_multi_create12
     skip # haven't touched this yet
     cluster = "Test123"
@@ -108,8 +124,6 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     
     rid = @session.create_record(cluster_id, record)
     rec = @session.load_record(rid)
-    
-    
   end
   
   def test_create_class # we now create classes through the session

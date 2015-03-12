@@ -360,7 +360,7 @@ class TestProtocol7 < MiniTest::Unit::TestCase
     assert_equal 1, result[:message_content][:result]
   end
 
-  # TODO - This is on the chopping block and several other methods in here since protocol12 supercedes
+  # TODO - This is on the chopping block and several other methods in here that protocol12 supercedes
   def test_db_open
     inputs = sequence('inputs')
     @socket.expects(:write).with(pack_byte(@protocol::Operations::DB_OPEN)).in_sequence(inputs)

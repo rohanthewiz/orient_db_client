@@ -1,7 +1,6 @@
 require_relative '../rid'
 require 'bindata'
 require 'base64'
-require 'pry' # Todo remove for prod
 
 module OrientDBClient
   module Deserializers
@@ -28,7 +27,6 @@ module OrientDBClient
       endian :big
       int8 				      :config
       int32 						:rid_count
-      # string						:rids, :read_length => :rid_count
     end
 
     class StringResponse < BinData::Record
@@ -45,15 +43,13 @@ module OrientDBClient
         special_content = nil
 
         result_type = read_byte socket
-        puts "result_type: #{result_type}"
         case result_type
 
         when 108 # a collection of records
           col_len = read_integer socket
           puts "records: #{col_len}"
           col_len.times do
-            res = read_record(socket)
-            records << res # fields # todo combine with above
+            records = read_record(socket)
           end
 
         when 110
@@ -80,16 +76,11 @@ module OrientDBClient
       def read_record(socket)
         fields = { :document => {}, :structure => {} }
         struct_info = {}
-        # bytes_consumed = 0
-
         qr = QueryRecord.new
         record = qr.read(socket)
-        # bytes_consumed += record.do_num_bytes
-
         if record.cluster_id.do_num_bytes > 0
           fields[:rid] = OrientDBClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
         end
-
         # Parse the document proper
         tokens = record.properties.split(',')
         while token = tokens.shift
@@ -99,8 +90,7 @@ module OrientDBClient
             token = arr[1]
           end
           field, value = parse_field(token, tokens, struct_info)
-          fields[field] = value if field == :class  # unless field == :delimiter || field == :property_len
-
+          fields[field] = value if field == :class
           fields[:document][field] = value
           fields[:structure][field] = struct_info[:type]
         end
@@ -169,24 +159,22 @@ module OrientDBClient
 
       def parse_field(token, tokens, struct_info)
         field, value = token.split(':', 2)
-
         field = remove_ends(field) if field.match(@@string_matcher)
-
         if (field =~ /^(in|out)_/) != nil
-          value =  parse_rid_bag(value)
+          value =  parse_rid_bag(value, struct_info)
         else
           value = parse_value(value, tokens, struct_info)
         end
-
         return field, value
       end
 
-      def parse_rid_bag(value)
+      def parse_rid_bag(value, struct_info)
         value = Base64.decode64(value)
         return '' if value.length < 1
         rb = RidBag.new.read value
 
         return [] if rb.rid_count < 1
+        struct_info[:type] = :collection
         value = value[5..-1]
         rid_bin = RidBin.new
         rids = []
@@ -251,55 +239,53 @@ module OrientDBClient
             value.gsub! /\"$/, ''
           when '_'
             close_token!(value, '_', ',', tokens)
-
             struct_info[:type] = :binary
-            value = Base64.decode64(remove_ends(value))
+            Base64.decode64(remove_ends(value))
           when '#'
             struct_info[:type] = :rid
-            value = OrientDBClient::Rid.new(value)
+            OrientDBClient::Rid.new(value)
           else
-
-            value = if value.length == 0
-                      nil
-                    elsif value == 'null'
-                      nil
-                    elsif value == 'true'
-                      struct_info[:type] = :boolean
-                      true
-                    elsif value == 'false'
-                      struct_info[:type] = :boolean
-                      false
-                    else
-                      case value[value.length - 1]
-                        when 'b'
-                          struct_info[:type] = :byte
-                          value.to_i
-                        when 's'
-                          struct_info[:type] = :short
-                          value.to_i
-                        when 'l'
-                          struct_info[:type] = :long
-                          value.to_i
-                        when 'f'
-                          struct_info[:type] = :float
-                          value.to_f
-                        when 'd'
-                          struct_info[:type] = :double
-                          value.to_f
-                        when 'c'
-                          struct_info[:type] = :decimal
-                          value.to_f
-                        when 't'
-                          struct_info[:type] = :time
-                          parse_time(value)
-                        when 'a'
-                          struct_info[:type] = :date
-                          parse_date(value)
-                        else
-                          struct_info[:type] = :integer
-                          value.to_i
-                      end
-                    end
+            if value.length == 0
+              nil
+            elsif value == 'null'
+              nil
+            elsif value == 'true'
+              struct_info[:type] = :boolean
+              true
+            elsif value == 'false'
+              struct_info[:type] = :boolean
+              false
+            else
+              case value[value.length - 1]
+                when 'b'
+                  struct_info[:type] = :byte
+                  value.to_i
+                when 's'
+                  struct_info[:type] = :short
+                  value.to_i
+                when 'l'
+                  struct_info[:type] = :long
+                  value.to_i
+                when 'f'
+                  struct_info[:type] = :float
+                  value.to_f
+                when 'd'
+                  struct_info[:type] = :double
+                  value.to_f
+                when 'c'
+                  struct_info[:type] = :decimal
+                  value.to_f
+                when 't'
+                  struct_info[:type] = :time
+                  parse_time(value)
+                when 'a'
+                  struct_info[:type] = :date
+                  parse_date(value)
+                else
+                  struct_info[:type] = :integer
+                  value.to_i
+              end
+            end
         end
       end
     end

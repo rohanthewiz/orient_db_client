@@ -7,10 +7,11 @@ module OrientDBClient
 			@connection = connection
     end
 
+    # Returns nil success, or connection object if @connection is still open
     def close(kill_connection)
       if @connection.sessions.length == 0 && kill_connection
         @connection.close unless @connection.closed?
-        @connection.closed?  # TODO have the return of this method be homogenous
+        return @connection.closed? ? nil : @connection
       else
         # puts 'The existing connection object is returned'
         @connection
