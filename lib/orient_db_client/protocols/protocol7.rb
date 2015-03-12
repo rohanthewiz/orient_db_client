@@ -320,17 +320,18 @@ module OrientDBClient
 																				:mode => options[:async] ? 'a'.ord : 's'.ord,
 																				:command_serialized => query.to_binary_s
 				command.write(socket)
-        # socket may need a little time
+        # socket may need a little time - no not if reading from the stream
         # 3.times do
         #   socket.stat
         #   break if socket.stat.size > 60
         #   sleep 0.01
         # end
-        read_byte(socket) # 1st byte is an error bit, but since there is another in the payload, ignore for now
+        read_byte(socket) # 1st byte is an error bit, but since there is another error bit in the payload, ignore for now
         resp_session = read_integer(socket)
-        payload = socket.recvfrom(socket.stat.size) # I have to read everything at once or socket drops data
-        payload = payload.first if payload.respond_to? :each
-        command_results = deserializer.deserialize(payload)
+        # payload = socket.recvfrom(socket.stat.size) # Not the right way to read from a stream
+        # payload = payload.first if payload.respond_to? :each
+        command_results = deserializer.deserialize(socket)
+        socket.recvfrom(socket.stat.size) # make sure no stray bytes left in socket - like a null :-)
 				{ message_content: { session: resp_session, message_content: command_results }}
 			end
 

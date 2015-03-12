@@ -12,7 +12,7 @@ module OrientDBClient
         @connection.close unless @connection.closed?
         @connection.closed?  # TODO have the return of this method be homogenous
       else
-        puts 'The existing connection object is returned'
+        # puts 'The existing connection object is returned'
         @connection
       end
     end

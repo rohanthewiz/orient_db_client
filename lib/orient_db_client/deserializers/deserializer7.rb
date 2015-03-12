@@ -1,6 +1,7 @@
 require_relative '../rid'
 require 'bindata'
 require 'base64'
+require 'pry' # Todo remove for prod
 
 module OrientDBClient
   module Deserializers
@@ -39,39 +40,34 @@ module OrientDBClient
     class Deserializer7
       @@string_matcher = /^"[^"]*"$/
 
-      def deserialize(text)
+      def deserialize(socket)
         records = []
         special_content = nil
 
-        binstr, result_type = grab(text, 1)
-        puts "result_type: #{result_type == "\x01" ? "1" : result_type}, response_length: #{binstr.length} bytes"
-
+        result_type = read_byte socket
+        puts "result_type: #{result_type}"
         case result_type
 
-        when 'l' # a collection of records
-          binstr, col_len = grab(binstr, 4, true)
+        when 108 # a collection of records
+          col_len = read_integer socket
           puts "records: #{col_len}"
           col_len.times do
-            res = read_record(binstr)
-            records << res[0] # fields
-            binstr = binstr[res[1] .. -1] # res[1] is bytes consumed
+            res = read_record(socket)
+            records << res # fields # todo combine with above
           end
 
-        when 'n'
+        when 110
           special_content = 'none'
 
-        when 'a'
-          resp = OrientDBClient::Deserializers::StringResponse.new.read(binstr)
-          special_content = resp[:response]
+        when 97
+          special_content = read_string socket
 
-        when 'r'
-          records << read_record(binstr)[0]
+        when 114
+          records << read_record(socket)
           puts 'records: 1'
         else
-          # check for hex number
-          result_type = result_type.unpack('H*').first
-          if result_type == '01' # we have an error
-            special_content = read_error_response(binstr)
+          if result_type == 1 # we have an error
+            special_content = read_error_response(socket)
             puts special_content
           end
         end
@@ -81,14 +77,14 @@ module OrientDBClient
 
       private
 
-      def read_record(binstr)
+      def read_record(socket)
         fields = { :document => {}, :structure => {} }
         struct_info = {}
-        bytes_consumed = 0
+        # bytes_consumed = 0
 
         qr = QueryRecord.new
-        record = qr.read(binstr)
-        bytes_consumed += record.do_num_bytes
+        record = qr.read(socket)
+        # bytes_consumed += record.do_num_bytes
 
         if record.cluster_id.do_num_bytes > 0
           fields[:rid] = OrientDBClient::Rid.new("##{record.cluster_id}:#{record.cluster_position}")
@@ -108,31 +104,44 @@ module OrientDBClient
           fields[:document][field] = value
           fields[:structure][field] = struct_info[:type]
         end
-
-        [fields, bytes_consumed]
+        fields
       end
 
-      def read_error_response(binstr)
-        errs = []; offset = 0
+      def read_error_response(socket)
+        errs = []
         4.times do |i|
-          break unless offset < binstr.length - 1
-          resp = OrientDBClient::Deserializers::StringResponse.new.read(binstr[offset .. -1])
-          errs << resp[:response]
-          offset += resp.do_num_bytes
+          errs << read_string(socket)
           if i == 1
-            upk = binstr[offset .. -1].unpack("H*").first.to_i(16)
-            break if upk != 1
-            offset += 1
+            break if read_byte(socket) != 1
           end
         end
         errs.join("\n")
       end
 
-      def grab(binary_string, n_bytes, to_int = false)
-        slice = binary_string[0..(n_bytes -1)]
-        slice = unpack_hex_bytes(slice) if to_int
+      def read_byte(socket)
+        BinData::Int8.read(socket).to_i
+      end
 
-        [binary_string[n_bytes .. -1], slice]
+      def read_integer(socket)
+        BinData::Int32be.read(socket).to_i
+      end
+
+      def read_long(socket)
+        BinData::Int64be.read(socket).to_i
+      end
+
+      def read_short(socket)
+        BinData::Int16be.read(socket).to_i
+      end
+
+      def read_string(socket)
+        bin_length = read_integer(socket)
+        return nil if bin_length < 0
+
+        raise bin_length.inspect if bin_length < 0
+
+        bin_str = socket.read(bin_length)
+        bin_str.length > 0 ? bin_str : nil
       end
 
       def unpack_hex_bytes(slice)

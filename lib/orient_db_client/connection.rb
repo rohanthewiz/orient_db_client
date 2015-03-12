@@ -90,7 +90,6 @@ module OrientDBClient
 
     def database_exists?(session, database)
       response = @protocol.db_exist(@socket, session, database)
-      puts "response: #{response}"
 
       response[:message_content][:result] == 1
     end

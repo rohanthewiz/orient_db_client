@@ -68,38 +68,33 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
   def test_single_query
     result = {}
     Benchmark.realtime do
-      result = @session.command("select from Family where name = 'Johnson'")
+      result = @session.command("select from E limit 5")
       # result = @session.command("create edge Owns from (select from Person where name = 'Farmer') to (select from Car where name = 'Mazda 626')")
     end
     puts "\n" + JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
   end
 
-  def test_complex_query
-    result = @session.query('select *,$distance as distance from Vehicle where [latitude, longitude, $spatial] NEAR [32.83, -97.04, {"maxDistance":100}]')
-    puts JSON.pretty_generate(result)
-    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
-  end
-
   def test_multi_query
-    result = @session.query('SELECT FROM V')
+    result = @session.query('SELECT FROM V limit 5')
     puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
-    result = @session.query('SELECT FROM E')
+    result = @session.query('SELECT FROM E limit 5')
     puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
 
-    result = @session.query('SELECT FROM OUser')
+    result = @session.query('SELECT FROM OUser limit 5')
     puts JSON.pretty_generate(result)
     assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
-
-    # result = @session.query('SELECT FROM Animal')
-    # puts JSON.pretty_generate(result)
-    # assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
-
   end
-  
+
+  def test_error_query
+    result = @session.query('select from x1issuuq limit 2')
+    puts JSON.pretty_generate(result)
+    assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+  end
+
   def test_multi_create12
     skip # haven't touched this yet
     cluster = "Test123"
@@ -177,5 +172,11 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
       end
     end
   end
+
+  # def test_complex_query # the query is bad here
+  #   result = @session.query('select *,$distance as distance from Vehicle where [latitude, longitude, $spatial] NEAR [32.83, -97.04, {"maxDistance":100}]')
+  #   puts JSON.pretty_generate(result)
+  #   assert_equal @session.id, result[:session], 'Session ID returned should be the same as that already stored in this session'
+  # end
 
 end

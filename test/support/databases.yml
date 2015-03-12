@@ -4,6 +4,6 @@ test:
   protocol_version: 28
   server_user: root
   server_password: orient
-  database: sitepoint-test
+  database: Corganizations  # sitepoint-test
   user: admin
   password: admin
