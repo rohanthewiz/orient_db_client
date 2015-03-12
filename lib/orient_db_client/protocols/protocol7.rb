@@ -198,7 +198,8 @@ module OrientDBClient
 					int8		 				:operation, 			:value => Operations::DB_CREATE
 					int32 					:session
 
-					protocol_string :database
+					protocol_string :database_name
+					protocol_string :database_type
 					protocol_string :storage_type
 				end
 
@@ -425,16 +426,16 @@ module OrientDBClient
 			end
 
 			def self.db_create(socket, session, database, options = {})
-        if options.is_a?(String) || options.is_a?(Symbol)
-            options = { :storage_type => options }
-        end
+        # if options.is_a?(String) || options.is_a?(Symbol)
+        #     options = { :storage_type => options }
+        # end
 
-        options = { :storage_type => 'local' }.merge(options)
+        # options = { :storage_type => 'local' }.merge(options)
 
-        options[:storage_type] = options[:storage_type].to_s
+        options[:database_type] = options[:database_type].to_s if options[:database_type]
+        options[:storage_type] = options[:storage_type].to_s if options[:storage_type]
 
 				make_db_create_command(session, database, options).write(socket)
-
 				read_response(socket)
 
 				{ :session => read_integer(socket) }
@@ -577,7 +578,8 @@ module OrientDBClient
 				options = args.shift
 
 				Commands::DbCreate.new :session => session,
-															 :database => database,
+															 :database_name => database,
+															 :database_type => options[:database_type],
 															 :storage_type => options[:storage_type]
 			end
 

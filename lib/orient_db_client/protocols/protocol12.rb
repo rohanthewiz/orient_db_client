@@ -88,13 +88,8 @@ module OrientDBClient
       end
 
       def self.db_create(socket, session, database, options = {})
-        if options.is_a?(String)
-          options = { :storage_type => options }
-        end
-
-        options = {
-          :database_type => 'document'
-        }.merge(options)
+        options = {:storage_type => 'plocal'}.merge(options) unless options[:storage_type]
+        options = {:database_type => 'graph'}.merge(options) unless options[:database_type]
 
         super
       end
