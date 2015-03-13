@@ -49,7 +49,7 @@ module OrientDBClient
           col_len = read_integer socket
           puts "records: #{col_len}"
           col_len.times do
-            records = read_record(socket)
+            records << read_record(socket)
           end
 
         when 110

@@ -1,7 +1,7 @@
 require File.join File.dirname(__FILE__), '..', 'test_helper'
 require 'json'
 require 'benchmark'
-# require 'pry' # TODO remove for production
+require 'pry' # TODO remove for production
 
 class TestDatabaseSession < MiniTest::Unit::TestCase
   include ServerConfig
@@ -42,9 +42,9 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
       assert db.command('create class Owns extends E')[:message_content].to_i.is_a? Integer
       assert db.command('insert into Person set name = "Johnny Boy"')[:message_content].is_a? Array
       assert db.command('insert into Car set name = "Miata"')[:message_content].is_a? Array
-      assert db.command('create edge Owns from (select from Person where name = "Johnny Boy") to (select from Car where name = "Miata")')[:message_content].is_a? Hash
+      assert db.command('create edge Owns from (select from Person where name = "Johnny Boy") to (select from Car where name = "Miata")')[:message_content].is_a? Array
 
-      assert (db.command('select from E'))[:message_content].is_a? Hash
+      assert (db.command('select from E'))[:message_content].is_a? Array
       puts JSON.pretty_generate(db.command("select expand(out('Owns')) from (select from Person where name = 'Johnny Boy')"))
       db.close
 
@@ -63,14 +63,14 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
     result[:message_content].tap do |content|
       assert content.length > 1, 'There should be at least one user'
 
-      # content[0].tap do |record|
-      #   assert record[:rid].is_a?(OrientDBClient::Rid)
-      #   assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
-      #   record[:document].tap do |fields |
-      #     assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
-      #     assert fields['roles'].is_a?(Array), "expected Array, but got #{fields['roles'].class}"
-      #   end
-      # end
+      content[0].tap do |record|
+        assert record[:rid].is_a?(OrientDBClient::Rid)
+        assert_equal 'OUser', record[:class], "class should be 'OUser', it is #{record[:class]}"
+        record[:document].tap do |fields |
+          assert_equal 'ACTIVE', fields['status'], 'User Status should be active'
+          assert fields['roles'].is_a?(Array), "expected Array, but got #{fields['roles'].class}"
+        end
+      end
     end
   end
 
@@ -106,8 +106,8 @@ class TestDatabaseSession < MiniTest::Unit::TestCase
 
   def test_db_convenience_method
     db = OrientDBClient.db('localhost', 'Corganizations', 'admin', 'admin') # create connection and session in one step
-    assert db.command('select from OUser')[:message_content].is_a? Hash
-    assert db.command('select from V limit 4')[:message_content].is_a? Hash
+    assert db.command('select from OUser')[:message_content].is_a? Array
+    assert db.command('select from V limit 4')[:message_content].is_a? Array
     db.close
   end
 

@@ -1,15 +1,14 @@
 OrientDB Client
 ===============
-*This is fork of jhstatewide/orient_db_client. It is in pre-alpha stage at the moment but don't be discouraged by that*.
+*This is fork of jhstatewide/orient_db_client. It is in beta stage at the moment but don't be discouraged by that*.
 The Gem is now working nicely and command and queries can be passed through
 
     db_session.command('select from Thing')
 
-The public interface will be reworked and solidified very soon. Hold on...
+The stable public interface is the set of commands listed here in the
+*Connecting*, *Server Operations*, *Database Operations* and *Crud sections*
 
-While in this early stage of development, the public interface is subject to change with no warning.
-
-You probably shouldn't use this in production just yet.
+You should be able to use these commands in production. Be sure to test.
 
 
 Supported OrientDB Releases
@@ -21,7 +20,7 @@ I've tested this against OrientDB-2.0.x which is the current official release as
 Supported Ruby Versions
 ---------------------------
 
-This gem has only been tested on 1.9.3. It should work on later versions. More tests soon.
+This gem has been tested on MRI Ruby 1.9.3 and 2.2. It should work all modern MRI versions.
 
 
 Basic Usage
@@ -31,7 +30,7 @@ There are two classifications of interaction with the OrientDB server:  Server a
 
 A server session is used for creating and deleting databases, as well as confirming their existence.  (Setting and reading the server configuration is also part of the protocol, but not yet supported by this gem.)
 
-A database session is used to performe all other work on a database, including but not limited to record CRUD operations, querying, and managing clusters (which are the physical files and logical subdivisions of an OrientDB database, not to be confused with clustering in the networking sense.)
+A database session is used to perform all other work on a database, including but not limited to record CRUD operations, querying, and managing clusters (which are the physical files and logical subdivisions of an OrientDB database, not to be confused with clustering in the networking sense.)
 
 ## Connecting to an OrientDB Server
 
@@ -94,6 +93,7 @@ Use the command interface to run all SQL commands/queries, it's simple and it wo
     database.command('create class Family extends V')
     database.command("insert into Family set name = 'Smith'")
     database.command("select from Family where name = 'Johnson'")
+
 
 ### Please disregard everything below.
 ** OLD STUFF ** Some of the convenience methods below can certainly be added in the future. Don't use them at the moment.
