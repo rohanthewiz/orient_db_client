@@ -60,7 +60,7 @@ module OrientDBClient
 
         when 114
           records << read_record(socket)
-          puts 'records: 1'
+          # puts 'records: 1'
         else
           if result_type == 1 # we have an error
             special_content = read_error_response(socket)
