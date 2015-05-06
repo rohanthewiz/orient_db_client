@@ -1,7 +1,9 @@
 OrientDB Client
 ===============
-*This is fork of jhstatewide/orient_db_client. It is in beta stage at the moment but don't be discouraged by that*.
-The Gem is now working nicely and command and queries can be passed through
+*This is fork of jhstatewide/orient_db_client.
+I am currently not maintaining this. If you are willing and able please create a fork.
+
+You should be able to run queries with
 
     db_session.command('select from Thing')
 
